@@ -1,0 +1,15 @@
+User Uploads Resume
+       ↓
+Extract Text from Resume (resume_parser.py)
+       ↓
+Scrape Jobs (job_scraper.py) → Extract job skills/requirements
+       ↓
+Skill Matching (skill_matcher.py)
+       ↓
+Calculate Similarity Score (cosine similarity)
+       ↓
+Generate Suggestions (suggestions.py)
+       ↓
+Save Results in DB
+       ↓
+Display Report to User (Flask + templates)

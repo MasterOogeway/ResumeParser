@@ -1,0 +1,26 @@
+# Other requirements or instructions:
+
+# 1. Ensure you have the appropriate WebDriver installed for Selenium.
+#    For example, ChromeDriver for Chrome, GeckoDriver for Firefox.
+#    Place the driver in your PATH or specify its location in your Selenium script.
+
+# 2. Download Spacy language models, e.g.:
+#    python -m spacy download en_core_web_sm
+
+# 3. Ensure system dependencies for cryptography and pdfminer are met (if any).
+
+# 4. Activate virtual environment before installing:
+#    venv\Scripts\activate
+
+# 5. (Optional) If you want to manage environments using requirements.txt,
+#    use pip-tools or poetry for more complex dependency resolution.
+
+# 6. Python version requirement: Python 3.12 (based on wheel compatibility in logs)
+
+# 7. Any system-level libraries needed for lxml, cffi, or cryptography
+#    might require installation via OS package manager if errors occur.
+
+# 8. Configure nltk datasets if required:
+#    In Python:
+#    import nltk
+#    nltk.download('all')

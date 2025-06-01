@@ -1,0 +1,959 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Parser & Job Matcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --matcha-primary: #7FB069;
+            --matcha-dark: #6B9A5B;
+            --matcha-light: #9BC53D;
+            --cream: #F7F3E9;
+            --cream-dark: #F0E8D3;
+            --sage: #A8B5A0;
+            --soft-white: #FEFEFE;
+            --text-dark: #2D3748;
+            --shadow: rgba(127, 176, 105, 0.2);
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--soft-white) 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Floating animation keyframes */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        /* Background decorative elements */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .floating-shape {
+            position: absolute;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Mochi shapes */
+        .mochi-1 {
+            width: 100px;
+            height: 80px;
+            background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: 15%;
+            right: 10%;
+            animation-delay: -1s;
+            box-shadow: inset -10px -5px 0px rgba(255, 105, 180, 0.3),
+                        0 8px 20px rgba(255, 105, 180, 0.4);
+            opacity: 0.8;
+        }
+
+        .mochi-2 {
+            width: 90px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--matcha-light) 0%, var(--matcha-primary) 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: 60%;
+            left: 8%;
+            animation-delay: -3s;
+            box-shadow: inset -8px -4px 0px rgba(155, 197, 61, 0.4),
+                        0 8px 20px rgba(127, 176, 105, 0.4);
+            opacity: 0.8;
+        }
+
+        .mochi-3 {
+            width: 85px;
+            height: 65px;
+            background: linear-gradient(135deg, #FFFFE0 0%, #F0E68C 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: 35%;
+            left: 5%;
+            animation-delay: -2s;
+            box-shadow: inset -6px -3px 0px rgba(240, 230, 140, 0.4),
+                        0 8px 20px rgba(240, 230, 140, 0.4);
+            opacity: 0.8;
+        }
+
+        /* Dango (3-colored dumplings on stick) */
+        .dango {
+            top: 40%;
+            right: 15%;
+            animation-delay: -4s;
+            opacity: 0.9;
+        }
+
+        .dango-stick {
+            width: 4px;
+            height: 90px;
+            background: linear-gradient(180deg, #8B4513 0%, #A0522D 100%);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .dango-ball {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .dango-pink { 
+            background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%); 
+            top: 5px; 
+        }
+        .dango-white { 
+            background: linear-gradient(135deg, #FFEFD5 0%, #F5DEB3 100%); 
+            top: 28px; 
+        }
+        .dango-green { 
+            background: linear-gradient(135deg, var(--matcha-light) 0%, var(--matcha-primary) 100%); 
+            top: 51px; 
+        }
+
+        /* Dorayaki (pancake sandwich) */
+        .dorayaki {
+            width: 90px;
+            height: 45px;
+            background: linear-gradient(135deg, #DEB887 0%, #CD853F 100%);
+            border-radius: 50px 50px 50px 50px / 25px 25px 25px 25px;
+            top: 75%;
+            right: 25%;
+            animation-delay: -5s;
+            position: relative;
+            box-shadow: 0 6px 15px rgba(205, 133, 63, 0.4);
+            opacity: 0.8;
+        }
+
+        .dorayaki::after {
+            content: '';
+            position: absolute;
+            width: 70px;
+            height: 10px;
+            background: linear-gradient(90deg, #8B4513 0%, #A0522D 100%);
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 15px;
+        }
+
+        /* Matcha tea bowl */
+        .tea-bowl {
+            width: 80px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--matcha-dark) 0%, var(--matcha-primary) 100%);
+            border-radius: 0 0 40px 40px;
+            top: 80%;
+            left: 15%;
+            animation-delay: -6s;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(107, 154, 91, 0.4);
+            opacity: 0.8;
+        }
+
+        .tea-bowl::before {
+            content: '';
+            position: absolute;
+            width: 65px;
+            height: 12px;
+            background: linear-gradient(90deg, rgba(155, 197, 61, 0.9), rgba(127, 176, 105, 0.7));
+            top: 8px;
+            left: 7px;
+            border-radius: 15px;
+        }
+
+        /* Additional floating elements */
+        .cherry-blossom {
+            width: 40px;
+            height: 40px;
+            top: 20%;
+            right: 30%;
+            animation-delay: -7s;
+            opacity: 0.8;
+        }
+
+        .petal {
+            width: 15px;
+            height: 18px;
+            background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
+            position: absolute;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 0 2px 6px rgba(255, 105, 180, 0.3);
+        }
+
+        .petal:nth-child(1) { transform: rotate(0deg) translateX(12px); }
+        .petal:nth-child(2) { transform: rotate(72deg) translateX(12px); }
+        .petal:nth-child(3) { transform: rotate(144deg) translateX(12px); }
+        .petal:nth-child(4) { transform: rotate(216deg) translateX(12px); }
+        .petal:nth-child(5) { transform: rotate(288deg) translateX(12px); }
+
+        /* Additional mochi for more presence */
+        .mochi-4 {
+            width: 75px;
+            height: 60px;
+            background: linear-gradient(135deg, #DDA0DD 0%, #DA70D6 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            top: 50%;
+            right: 5%;
+            animation-delay: -8s;
+            box-shadow: inset -6px -3px 0px rgba(218, 112, 214, 0.4),
+                        0 8px 20px rgba(221, 160, 221, 0.4);
+            opacity: 0.8;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--matcha-primary) 0%, var(--matcha-dark) 50%, var(--sage) 100%);
+            padding: 3rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 50px 50px;
+            margin-bottom: 2rem;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -30%;
+            width: 160%;
+            height: 160%;
+            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.1) 0%, transparent 40%);
+            animation: pulse 6s ease-in-out infinite;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(135deg, transparent 0%, rgba(247, 243, 233, 0.3) 50%, var(--cream) 100%);
+            border-radius: 50% 50% 0 0;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3.2rem;
+            margin-bottom: 0.8rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.3rem;
+            position: relative;
+            z-index: 2;
+            font-weight: 300;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Main sections */
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 20px 40px var(--shadow);
+            position: relative;
+            overflow: hidden;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--matcha-primary), var(--matcha-light));
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: var(--matcha-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, var(--matcha-primary), var(--matcha-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        /* Upload section */
+        .upload-area {
+            border: 3px dashed var(--matcha-primary);
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            background: linear-gradient(145deg, var(--cream) 0%, var(--soft-white) 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--matcha-dark);
+            background: linear-gradient(145deg, var(--soft-white) 0%, var(--cream) 100%);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px var(--shadow);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--matcha-primary);
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(45deg, var(--matcha-primary), var(--matcha-light));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(127, 176, 105, 0.3);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(127, 176, 105, 0.4);
+        }
+
+        /* Results section */
+        .results-section {
+            display: none;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .score-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .score-card {
+            background: linear-gradient(145deg, var(--cream) 0%, var(--soft-white) 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .score-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .score-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--matcha-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-label {
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--cream-dark);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--matcha-primary), var(--matcha-light));
+            border-radius: 6px;
+            transition: width 1s ease-out;
+        }
+
+        /* Skills analysis */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .skill-tag {
+            background: linear-gradient(45deg, var(--matcha-primary), var(--matcha-light));
+            color: white;
+            padding: 0.8rem;
+            border-radius: 25px;
+            text-align: center;
+            font-size: 0.9rem;
+            box-shadow: 0 5px 15px rgba(127, 176, 105, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .skill-tag:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(127, 176, 105, 0.4);
+        }
+
+        /* Jobs section */
+        .jobs-section {
+            display: none;
+        }
+
+        .job-card {
+            background: linear-gradient(145deg, var(--soft-white) 0%, var(--cream) 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 10px 25px var(--shadow);
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--matcha-primary);
+        }
+
+        .job-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 15px 35px var(--shadow);
+        }
+
+        .job-title {
+            font-size: 1.5rem;
+            color: var(--matcha-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .job-company {
+            color: var(--sage);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .job-match {
+            background: var(--matcha-primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .find-jobs-btn {
+            background: linear-gradient(45deg, var(--matcha-dark), var(--matcha-primary));
+            color: white;
+            border: none;
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(107, 154, 91, 0.3);
+            display: block;
+            margin: 2rem auto;
+        }
+
+        .find-jobs-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(107, 154, 91, 0.4);
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--cream-dark);
+            border-top: 4px solid var(--matcha-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .upload-area {
+                padding: 2rem;
+            }
+
+            .score-display {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background decorations -->
+    <div class="bg-decoration">
+        <!-- Mochi pieces -->
+        <div class="floating-shape mochi-1"></div>
+        <div class="floating-shape mochi-2"></div>
+        <div class="floating-shape mochi-3"></div>
+        
+        <!-- Dango (dumplings on stick) -->
+        <div class="floating-shape dango">
+            <div class="dango-stick"></div>
+            <div class="dango-ball dango-pink"></div>
+            <div class="dango-ball dango-white"></div>
+            <div class="dango-ball dango-green"></div>
+        </div>
+        
+        <!-- Dorayaki (pancake sandwich) -->
+        <div class="floating-shape dorayaki"></div>
+        
+        <!-- Matcha tea bowl -->
+        <div class="floating-shape tea-bowl"></div>
+        
+        <!-- Cherry blossom -->
+        <div class="floating-shape cherry-blossom">
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+        </div>
+        
+        <!-- Additional purple mochi -->
+        <div class="floating-shape mochi-4"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>🤖 AI Resume Parser</h1>
+        <p>Analyze your resume, get insights, and find matching jobs</p>
+    </header>
+
+    <div class="container">
+        <!-- Upload Section -->
+        <section class="section">
+            <h2 class="section-title">
+                <div class="section-icon">📄</div>
+                Upload Your Resume
+            </h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">☁️</div>
+                <div class="upload-text">Drag and drop your PDF resume here</div>
+                <p style="color: var(--sage); margin-bottom: 1rem;">or</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Choose File
+                </button>
+                <input type="file" id="fileInput" class="file-input" accept=".pdf" onchange="handleFileUpload(event)">
+                <input type="file" id="fileInput" class="file-input" accept=".pdf">
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your resume... This may take a moment.</p>
+        </div>
+
+        <!-- Results Section -->
+        <section class="section results-section" id="resultsSection">
+            <h2 class="section-title">
+                <div class="section-icon">📊</div>
+                Resume Analysis Results
+            </h2>
+            
+            <div class="score-display">
+                <div class="score-card">
+                    <div class="score-number" id="overallScore">85</div>
+                    <div class="score-label">Overall Score</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%"></div>
+                    </div>
+                </div>
+                
+                <div class="score-card">
+                    <div class="score-number" id="skillsScore">78</div>
+                    <div class="score-label">Skills Match</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%"></div>
+                    </div>
+                </div>
+                
+                <div class="score-card">
+                    <div class="score-number" id="experienceScore">92</div>
+                    <div class="score-label">Experience</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 92%"></div>
+                    </div>
+                </div>
+                
+                <div class="score-card">
+                    <div class="score-number" id="formatScore">88</div>
+                    <div class="score-label">Format Quality</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 88%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="color: var(--matcha-dark); margin: 2rem 0 1rem;">📈 Key Strengths Identified</h3>
+            <div class="skills-grid" id="skillsGrid">
+                <div class="skill-tag">JavaScript</div>
+                <div class="skill-tag">Python</div>
+                <div class="skill-tag">React</div>
+                <div class="skill-tag">Node.js</div>
+                <div class="skill-tag">SQL</div>
+                <div class="skill-tag">Project Management</div>
+                <div class="skill-tag">Team Leadership</div>
+                <div class="skill-tag">Problem Solving</div>
+            </div>
+
+            <button class="find-jobs-btn" onclick="showMatchingJobs()">
+                🔍 Find Matching Jobs
+            </button>
+        </section>
+
+        <!-- Jobs Section -->
+        <section class="section jobs-section" id="jobsSection">
+            <h2 class="section-title">
+                <div class="section-icon">💼</div>
+                Matching Job Opportunities
+            </h2>
+            
+            <div class="job-card">
+                <div class="job-title">Senior Full Stack Developer</div>
+                <div class="job-company">TechCorp Solutions</div>
+                <div class="job-match">94% Match</div>
+                <p>Looking for an experienced developer with strong JavaScript and React skills. Remote work available.</p>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Software Engineering Lead</div>
+                <div class="job-company">Innovation Labs</div>
+                <div class="job-match">89% Match</div>
+                <p>Lead a team of developers while working on cutting-edge projects. Python and leadership experience required.</p>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Technical Project Manager</div>
+                <div class="job-company">Digital Dynamics</div>
+                <div class="job-match">82% Match</div>
+                <p>Combine technical expertise with project management skills. Perfect for developers looking to transition to management.</p>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Frontend Developer</div>
+                <div class="job-company">Creative Studio</div>
+                <div class="job-match">78% Match</div>
+                <p>Focus on creating beautiful user interfaces with React and modern JavaScript frameworks.</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const loadingDiv = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const jobsSection = document.getElementById('jobsSection');
+        
+        // For storing search_id if needed for other actions like clear
+        let currentSearchId = null;
+
+        // File upload handling via button
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--matcha-dark)';
+            uploadArea.style.backgroundColor = 'var(--cream)';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--matcha-primary)';
+            uploadArea.style.backgroundColor = '';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--matcha-primary)';
+            uploadArea.style.backgroundColor = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (file && (file.type === 'application/pdf' || file.name.endsWith('.doc') || file.name.endsWith('.docx'))) {
+                processResumeWithBackend(file);
+            } else {
+                alert('Please upload a valid resume file (PDF, DOC, DOCX).');
+            }
+        }
+
+        async function processResumeWithBackend(file) {
+            loadingDiv.style.display = 'block';
+            resultsSection.style.display = 'none';
+            jobsSection.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('resume', file);
+
+            try {
+                const response = await fetch('/api/process_resume', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                loadingDiv.style.display = 'none';
+
+                if (!response.ok) {
+                    let errorMsg = `Server error: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.message || errorMsg;
+                    } catch (e) { /* Ignore if error response is not JSON */ }
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    currentSearchId = result.data.search_id;
+                    displayResumeAnalysis(result.data.resume_data);
+                    displayJobs(result.data.personalized_jobs, 'personalized');
+                    
+                    if (result.data.recommended_jobs && result.data.recommended_jobs.length > 0) {
+                        displayJobs(result.data.recommended_jobs, 'recommended');
+                    } else if (!result.data.personalized_jobs || result.data.personalized_jobs.length === 0) {
+                        // Display a message if no jobs of any kind were found
+                        document.getElementById('jobsSection').innerHTML = '<h2 class="section-title"><div class="section-icon">💼</div>Matching Job Opportunities</h2><p class="no-results">No job matches found at this time.</p>';
+                    }
+                    
+                    resultsSection.style.display = 'block';
+                    jobsSection.style.display = 'block';
+                    resultsSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(`Error: ${result.message || 'Unknown error processing resume.'}`);
+                }
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                console.error('Error processing resume:', error);
+                alert(`An error occurred: ${error.message}`);
+            }
+        }
+
+        function displayResumeAnalysis(resumeData) {
+            if (!resumeData) return;
+
+            // Overall Score (example - your Flask app might send one score or multiple)
+            const overallScoreEl = document.getElementById('overallScore');
+            const overallProgressBar = overallScoreEl.closest('.score-card').querySelector('.progress-fill');
+            if (resumeData.resume_score !== undefined) {
+                const scorePercent = Math.round(resumeData.resume_score * 100);
+                overallScoreEl.textContent = scorePercent;
+                if(overallProgressBar) overallProgressBar.style.width = `${scorePercent}%`;
+            } else {
+                overallScoreEl.textContent = 'N/A';
+                 if(overallProgressBar) overallProgressBar.style.width = `0%`;
+            }
+            // Remove or hide other static score cards or adapt them if your backend sends more scores
+            // For simplicity, let's hide the other placeholder score cards
+            const scoreCards = document.querySelectorAll('.score-card');
+            scoreCards.forEach((card, index) => {
+                if (index > 0) { // Hide all but the first (overallScore) card
+                    card.style.display = 'none';
+                }
+            });
+
+
+            const skillsGrid = document.getElementById('skillsGrid');
+            skillsGrid.innerHTML = ''; // Clear existing static skills
+            if (resumeData.extracted_skills && resumeData.extracted_skills.length > 0) {
+                resumeData.extracted_skills.slice(0, 12).forEach(skill => { // Show up to 12 skills
+                    const skillTag = document.createElement('div');
+                    skillTag.className = 'skill-tag';
+                    skillTag.textContent = skill;
+                    skillsGrid.appendChild(skillTag);
+                });
+                if(resumeData.extracted_skills.length > 12){
+                    const skillTag = document.createElement('div');
+                    skillTag.className = 'skill-tag';
+                    skillTag.textContent = `... and ${resumeData.extracted_skills.length - 12} more`;
+                    skillsGrid.appendChild(skillTag);
+                }
+            } else {
+                skillsGrid.innerHTML = '<p class="no-results">No key skills were extracted.</p>';
+            }
+            
+            // Remove the "Find Matching Jobs" button as jobs are now loaded with analysis
+            const findJobsBtn = document.querySelector('.find-jobs-btn');
+            if (findJobsBtn) findJobsBtn.style.display = 'none';
+        }
+
+        function displayJobs(jobListings, type) {
+            // For this version, we'll combine all jobs into one section for simplicity.
+            // You could create separate sections if preferred.
+            const jobsContainer = document.getElementById('jobsSection');
+            
+            if (type === 'personalized' && (!jobListings || jobListings.length === 0)) {
+                // If these were supposed to be personalized but none found, 
+                // an initial message is handled in processResumeWithBackend.
+                // This function will be called again for recommended if they exist.
+                return; 
+            }
+            
+            if (type === 'personalized') { // Clear previous results only for new personalized search
+                 jobsContainer.innerHTML = '<h2 class="section-title"><div class="section-icon">💼</div>Job Opportunities</h2>';
+            }
+
+
+            if (!jobListings || jobListings.length === 0) {
+                if (type === 'recommended' && !document.querySelector('.job-card')) { // Only show if no jobs at all
+                    const noJobsMsg = document.createElement('p');
+                    noJobsMsg.className = 'no-results';
+                    noJobsMsg.textContent = 'No additional recommended jobs found.';
+                    jobsContainer.appendChild(noJobsMsg);
+                }
+                return;
+            }
+            
+            jobListings.forEach(job => {
+                const jobCard = document.createElement('div');
+                jobCard.className = 'job-card';
+                
+                let jobDetailsHtml = `
+                    <div class="job-title">${job.title || 'N/A'}</div>
+                    <div class="job-company">${job.company || 'N/A'}</div>
+                    <p><strong>Location:</strong> ${job.location || 'N/A'}</p>
+                    <p><strong>Source:</strong> ${job.source_site || 'N/A'}</p>
+                `;
+                if (job.url) {
+                    jobDetailsHtml += `<p><a href="${job.url}" target="_blank">View Job</a></p>`;
+                }
+                if (job.description_text) {
+                    jobDetailsHtml += `<p><strong>Description (Snippet):</strong> ${escapeHtml(job.description_text.substring(0, 200))}...</p>`;
+                }
+                jobCard.innerHTML = jobDetailsHtml;
+                jobsContainer.appendChild(jobCard);
+            });
+        }
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // Hide results and jobs section initially
+        document.addEventListener('DOMContentLoaded', function() {
+            resultsSection.style.display = 'none';
+            jobsSection.style.display = 'none';
+            loadingDiv.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
